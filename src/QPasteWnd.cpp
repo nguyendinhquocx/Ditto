@@ -1456,6 +1456,48 @@ void CQPasteWnd::UpdateStatus(bool bRepaintImmediately)
 	SetCustomWindowTitle(windowTitle);
 }
 
+//Remove a filter token ("/star", "/today") from anywhere in the search text.
+//Token matches as a whole word: "/star" or "/star foo", never "/stars" or "a/star".
+static bool Filter_CutTokenAnywhere(CString &csText, LPCTSTR token)
+{
+	int tokenLen = (int)_tcslen(token);
+	int pos = 0;
+	while ((pos = csText.Find(token, pos)) >= 0)
+	{
+		bool startOk = (pos == 0 || csText[pos - 1] == _T(' '));
+		int end = pos + tokenLen;
+		bool endOk = (end >= csText.GetLength() || csText[end] == _T(' '));
+		if (startOk && endOk)
+		{
+			CString left = csText.Left(pos);
+			CString right = csText.Mid(end);
+			left.TrimRight();
+			right.TrimLeft();
+			if (left.IsEmpty() || right.IsEmpty())
+				csText = left + right;
+			else
+				csText = left + _T(" ") + right;
+			return true;
+		}
+		pos++;
+	}
+	return false;
+}
+
+//Cut a type filter prefix that must be the FIRST token ("/image" or "/image foo",
+//but not "/images"). On match csText becomes the remaining keyword text.
+static bool Filter_CutTypePrefix(CString &csText, LPCTSTR token)
+{
+	int len = (int)_tcslen(token);
+	if (csText.Left(len) != token)
+		return false;
+	if (csText.GetLength() > len && csText[len] != _T(' '))
+		return false;
+	csText = csText.Mid(len);
+	csText.TrimLeft();
+	return true;
+}
+
 BOOL CQPasteWnd::FillList(CString csSQLSearch)
 {
 	KillTimer(TIMER_DO_SEARCH);
@@ -1544,6 +1586,46 @@ BOOL CQPasteWnd::FillList(CString csSQLSearch)
 	}
 	else
 	{
+		// ---- slash type filters: /image /file /text /link /star /today ----
+		//These MUST be stripped before descriptionFormat.Parse below: the
+		//description parser must only see the remaining keyword text, otherwise
+		//the filter tokens leak into the text search and the filter never applies.
+		CString typeFilterSql;
+		bool bHaveStar = false;
+		bool bHaveToday = false;
+
+		//One type filter, only as the first token ("/image", "/image logo").
+		//Format names always come from GetFormatName (PNG is the custom Ditto
+		//image format, theApp.m_PNG_Format). EXISTS subquery instead of the
+		//INNER JOIN pattern in ClipIds.cpp - the join returns duplicate rows
+		//when a clip holds more than one matching format.
+		if (Filter_CutTypePrefix(csSQLSearch, _T("/image")))
+		{
+			typeFilterSql.Format(_T("EXISTS(SELECT 1 FROM Data WHERE Data.lParentID = Main.lID AND ")
+				_T("Data.strClipBoardFormat IN ('%s', '%s'))"),
+				GetFormatName(CF_DIB), GetFormatName(theApp.m_PNG_Format));
+		}
+		else if (Filter_CutTypePrefix(csSQLSearch, _T("/file")))
+		{
+			typeFilterSql.Format(_T("EXISTS(SELECT 1 FROM Data WHERE Data.lParentID = Main.lID AND ")
+				_T("Data.strClipBoardFormat = '%s')"),
+				GetFormatName(CF_HDROP));
+		}
+		else if (Filter_CutTypePrefix(csSQLSearch, _T("/text")))
+		{
+			typeFilterSql.Format(_T("EXISTS(SELECT 1 FROM Data WHERE Data.lParentID = Main.lID AND ")
+				_T("Data.strClipBoardFormat = '%s')"),
+				GetFormatName(CF_UNICODETEXT));
+		}
+		else if (Filter_CutTypePrefix(csSQLSearch, _T("/link")))
+		{
+			typeFilterSql = _T("Main.mText LIKE 'http%'");
+		}
+
+		// /star and /today may appear anywhere and work standalone as well
+		bHaveStar = Filter_CutTokenAnywhere(csSQLSearch, _T("/star"));
+		bHaveToday = Filter_CutTokenAnywhere(csSQLSearch, _T("/today"));
+
 		CFormatSQL descriptionFormat;
 		CString descriptionSql;
 		CFormatSQL quickPasteFormat;
@@ -1552,8 +1634,11 @@ BOOL CQPasteWnd::FillList(CString csSQLSearch)
 		CString fullTextSql;
 
 		//If other are off then always search the description
-		if (CGetSetOptions::GetSearchDescription() ||
-			(CGetSetOptions::GetSearchFullText() == FALSE && CGetSetOptions::GetSearchQuickPaste() == FALSE))
+		//Skip when the search text is empty (e.g. it was only "/image", "/today"):
+		//parsing an empty string would add a match-all LIKE and dilute the filter.
+		if (csSQLSearch != _T("") &&
+			(CGetSetOptions::GetSearchDescription() ||
+			(CGetSetOptions::GetSearchFullText() == FALSE && CGetSetOptions::GetSearchQuickPaste() == FALSE)))
 		{
 			descriptionFormat.SetVariable("Main.mText");
 
@@ -1607,35 +1692,83 @@ BOOL CQPasteWnd::FillList(CString csSQLSearch)
 			}
 		}
 
-		strFilter = _T("(");
+		//Compose the text search conditions first, then AND on the slash filters.
+		//Every piece is only appended when present so a filter standing alone
+		//("/today", "/image") still yields a valid WHERE clause.
+		CString textFilter;
 
 		if (descriptionSql != _T(""))
 		{
-			strFilter += descriptionSql;
+			textFilter += descriptionSql;
 		}
 
 		if (quickPasteSql != _T(""))
 		{
-			if (descriptionSql != _T(""))
+			if (textFilter != _T(""))
 			{
-				strFilter += _T(" OR ");
+				textFilter += _T(" OR ");
 			}
 
-			strFilter += quickPasteSql;
+			textFilter += quickPasteSql;
 		}
 
 		if (fullTextSql != _T(""))
 		{
-			if (descriptionSql != _T("") ||
-				quickPasteSql != _T(""))
+			if (textFilter != _T(""))
 			{
-				strFilter += _T(" OR ");
+				textFilter += _T(" OR ");
 			}
 
-			strFilter += fullTextSql;
+			textFilter += fullTextSql;
 		}
 
-		strFilter += _T(")");
+		if (textFilter != _T(""))
+		{
+			strFilter = _T("(") + textFilter + _T(")");
+		}
+
+		if (typeFilterSql != _T(""))
+		{
+			if (strFilter != _T(""))
+			{
+				strFilter += _T(" AND ");
+			}
+
+			strFilter += typeFilterSql;
+		}
+
+		//Reuse strStarredFilter ("Main.bIsGroup = 0 AND Main.lDontAutoDelete > 0")
+		//instead of a second copy of the starred condition.
+		if (bHaveStar)
+		{
+			if (strFilter != _T(""))
+			{
+				strFilter += _T(" AND ");
+			}
+
+			strFilter += _T("(") + strStarredFilter + _T(")");
+		}
+
+		//Local midnight as epoch seconds, matching Main.lDate (CTime based)
+		if (bHaveToday)
+		{
+			if (strFilter != _T(""))
+			{
+				strFilter += _T(" AND ");
+			}
+
+			CTime now = CTime::GetCurrentTime();
+			CTime dayStart(now.GetYear(), now.GetMonth(), now.GetDay(), 0, 0, 0);
+			CString todaySql;
+			todaySql.Format(_T("(Main.lDate >= %I64d)"), (__int64)dayStart.GetTime());
+			strFilter += todaySql;
+		}
+
+		if (strFilter == _T(""))
+		{
+			//No text, no slash filter reached here: keep a valid empty condition
+			strFilter = _T("()");
+		}
 
 		if (strParentFilter.IsEmpty() == FALSE)
 		{
