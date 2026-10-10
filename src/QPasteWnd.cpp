@@ -80,6 +80,7 @@ CQPasteWnd::CQPasteWnd()
 	m_bHandleSearchTextChange = true;
 	m_bModifersMoveActive = false;
 	m_suppressSearchCharUntil = 0;
+	m_selectClipIdWhenLoaded = -1;
 	m_showScrollBars = false;
 	m_leftSelectedCompareId = 0;
 	m_extraDataCounter = 0;
@@ -3246,7 +3247,8 @@ BOOL CQPasteWnd::PreTranslateMessage(MSG* pMsg)
 			return TRUE;
 		}
 		else if (pMsg->message == WM_CHAR &&
-			(pMsg->wParam == 's' || pMsg->wParam == 'S') &&
+			(pMsg->wParam == 's' || pMsg->wParam == 'S' ||
+				pMsg->wParam == 'q' || pMsg->wParam == 'Q') &&
 			GetTickCount() < m_suppressSearchCharUntil)
 		{
 			return TRUE;
@@ -6610,6 +6612,7 @@ void CQPasteWnd::OnUpdateMenuNewclip(CCmdUI* pCmdUI)
 
 LRESULT CQPasteWnd::OnSetListCount(WPARAM wParam, LPARAM lParam)
 {
+	Log(StrF(_T("OnSetListCount - count: %d, FocusID: %d"), (int)wParam, theApp.m_FocusID));
 	m_noSearchResults = false;
 
 	int x = m_lstHeader.GetScrollPos(SB_HORZ);
@@ -6632,6 +6635,15 @@ LRESULT CQPasteWnd::OnSetListCount(WPARAM wParam, LPARAM lParam)
 			CString text = theApp.m_Language.GetString("NoSearchResults", "There are no results for");
 			m_noSearchResultsStatic.SetWindowText(StrF(_T("%s \"%s\""), text, m_strSearch));
 		}
+	}
+
+	if (m_selectClipIdWhenLoaded > 0)
+	{
+		//Survives the RefreshView that SaveToDB triggers (which resets
+		//m_FocusID and refills the list) - select once the load settles.
+		theApp.m_FocusID = m_selectClipIdWhenLoaded;
+		m_selectClipIdWhenLoaded = -1;
+		Log(StrF(_T("OnSetListCount - pending select clip: %d"), theApp.m_FocusID));
 	}
 
 	SelectFocusID();
@@ -6684,6 +6696,7 @@ void CQPasteWnd::SelectFocusID()
 	{
 		if (iter->m_lID == theApp.m_FocusID)
 		{
+			Log(StrF(_T("SelectFocusID - matched lID: %d at index: %d"), iter->m_lID, index));
 			m_lstHeader.SetListPos(index);
 			selectedItem = true;
 			break;
@@ -6694,6 +6707,7 @@ void CQPasteWnd::SelectFocusID()
 
 	if (selectedItem == false)
 	{
+		Log(StrF(_T("SelectFocusID - no match for FocusID: %d, using default"), theApp.m_FocusID));
 		m_lstHeader.EnsureVisible(0, FALSE);
 		m_lstHeader.SetListPos(CGetSetOptions::SelectedIndex());
 	}

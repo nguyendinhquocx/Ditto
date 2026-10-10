@@ -151,6 +151,7 @@ public:
     bool m_bHandleSearchTextChange;
     bool m_bModifersMoveActive;
     DWORD m_suppressSearchCharUntil;
+    int m_selectClipIdWhenLoaded;
 
     CQPasteWndThread m_thread;
 	CQPasteWndThread m_extraDataThread;

@@ -429,6 +429,7 @@ void CEditWnd::OnForceClose()
 		{
 			DoSave();
 			focusId = m_lastSaveID;
+			Log(StrF(_T("OnForceClose - m_lastSaveID: %d, focusId: %d"), m_lastSaveID, focusId));
 
 			m_tabControl.DeleteItem(activeTab);
 			pEdit->DestroyWindow();
@@ -440,13 +441,6 @@ void CEditWnd::OnForceClose()
 
 	if(m_edits.size() <= 0)
 	{
-		if(focusId > 0)
-		{
-			//SelectFocusID (runs after the list reload) will scroll to and
-			//select this clip instead of leaving the selection at the top.
-			theApp.m_FocusID = focusId;
-		}
-
 		CWnd *pParent = GetParent();
 		if(pParent)
 		{
@@ -459,7 +453,23 @@ void CEditWnd::OnForceClose()
 			//bAtPrevPos = false: the popup window already holds the size the
 			//user resized to - passing true would reload the saved (older)
 			//size from the registry and shrink it.
-			((CMainFrame *)pMain)->m_quickPaste.ShowQPasteWnd(pMain, false, false, TRUE);
+			CQuickPaste *pQuickPaste = &((CMainFrame *)pMain)->m_quickPaste;
+			pQuickPaste->ShowQPasteWnd(pMain, false, false, TRUE);
+
+			if(pQuickPaste->m_pwndPaste != NULL)
+			{
+				//Select the edited clip once the list load settles (m_FocusID
+				//gets reset by the RefreshView that SaveToDB posts).
+				if(focusId > 0)
+				{
+					pQuickPaste->m_pwndPaste->m_selectClipIdWhenLoaded = focusId;
+				}
+
+				//Auto-repeat 'Q' keydowns that land after this handler (same
+				//mechanism as the Ctrl+S 's' leak) must not type into the search
+				//box of the popup we just brought back up.
+				pQuickPaste->m_pwndPaste->m_suppressSearchCharUntil = GetTickCount() + 800;
+			}
 		}
 	}
 }
