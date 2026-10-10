@@ -1586,6 +1586,11 @@ BOOL CQPasteWnd::FillList(CString csSQLSearch)
 	}
 	else
 	{
+		//Raw input kept for m_strSearch so filter-only searches ("/image", "/today")
+		//still count as "a search is active" for view persistence and the
+		//no-results message instead of silently degrading to an unfiltered list.
+		CString csRawSearch = csSQLSearch;
+
 		// ---- slash type filters: /image /file /text /link /star /today ----
 		//These MUST be stripped before descriptionFormat.Parse below: the
 		//description parser must only see the remaining keyword text, otherwise
@@ -1646,14 +1651,21 @@ BOOL CQPasteWnd::FillList(CString csSQLSearch)
 			descriptionSql = descriptionFormat.GetSQLString();
 		}
 
+		//Exact match without the trailing space ("/q", "/f") is accepted too so
+		//a cut /star //today cannot leave a bare "/q"//f" that silently becomes
+		//a text search for "/q"//f".
 		if (csSQLSearch.Left(3) == _T("/q ") ||
+			csSQLSearch == _T("/q") ||
 			csSQLSearch.Left(3) == _T("\\q ") ||
+			csSQLSearch == _T("\\q") ||
 			CGetSetOptions::GetSearchQuickPaste())
 		{
 			quickPasteFormat.SetVariable("Main.QuickPasteText");
 
 			if (csSQLSearch.Left(3) == _T("/q ") ||
-				csSQLSearch.Left(3) == _T("\\q "))
+				csSQLSearch.Left(3) == _T("\\q ") ||
+				csSQLSearch == _T("/q") ||
+				csSQLSearch == _T("\\q"))
 			{
 				csSQLSearch = csSQLSearch.Mid(3);
 			}
@@ -1663,13 +1675,17 @@ BOOL CQPasteWnd::FillList(CString csSQLSearch)
 		}
 
 		if (csSQLSearch.Left(3) == _T("/f ") ||
+			csSQLSearch == _T("/f") ||
 			csSQLSearch.Left(3) == _T("\\f ") ||
+			csSQLSearch == _T("\\f") ||
 			CGetSetOptions::GetSearchFullText())
 		{
 			dataJoin = _T("INNER JOIN Data on Data.lParentID = Main.lID");
 
 			if (csSQLSearch.Left(3) == _T("/f ") ||
-				csSQLSearch.Left(3) == _T("\\f "))
+				csSQLSearch.Left(3) == _T("\\f ") ||
+				csSQLSearch == _T("/f") ||
+				csSQLSearch == _T("\\f"))
 			{
 				csSQLSearch = csSQLSearch.Mid(3);
 			}
@@ -1784,7 +1800,7 @@ BOOL CQPasteWnd::FillList(CString csSQLSearch)
 		}
 
 		m_strSQLSearch = strFilter;
-		m_strSearch = csSQLSearch;
+		m_strSearch = csRawSearch;
 	}
 
 	CString sql;
