@@ -446,7 +446,10 @@ void CEditWnd::OnForceClose()
 		CWnd *pMain = AfxGetMainWnd();
 		if(pMain != NULL)
 		{
-			((CMainFrame *)pMain)->m_quickPaste.ShowQPasteWnd(pMain, true, false, TRUE);
+			//bAtPrevPos = false: the popup window already holds the size the
+			//user resized to - passing true would reload the saved (older)
+			//size from the registry and shrink it.
+			((CMainFrame *)pMain)->m_quickPaste.ShowQPasteWnd(pMain, false, false, TRUE);
 		}
 	}
 }

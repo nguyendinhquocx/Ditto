@@ -150,6 +150,7 @@ public:
     bool m_bStopQuery;
     bool m_bHandleSearchTextChange;
     bool m_bModifersMoveActive;
+    DWORD m_suppressSearchCharUntil;
 
     CQPasteWndThread m_thread;
 	CQPasteWndThread m_extraDataThread;

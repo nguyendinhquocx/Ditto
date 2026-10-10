@@ -79,6 +79,7 @@ CQPasteWnd::CQPasteWnd()
 	m_strSearch = "";
 	m_bHandleSearchTextChange = true;
 	m_bModifersMoveActive = false;
+	m_suppressSearchCharUntil = 0;
 	m_showScrollBars = false;
 	m_leftSelectedCompareId = 0;
 	m_extraDataCounter = 0;
@@ -3236,11 +3237,18 @@ BOOL CQPasteWnd::PreTranslateMessage(MSG* pMsg)
 		}
 		else if (pMsg->message == WM_KEYDOWN &&
 			pMsg->wParam == 'S' &&
-			(GetKeyState(VK_CONTROL) & 0x8000))
+			((GetKeyState(VK_CONTROL) & 0x8000) ||
+				GetTickCount() < m_suppressSearchCharUntil))
 		{
-			//Ctrl+S / Ctrl+Shift+S run from CheckActions on the first keydown;
-			//auto-repeat keydowns (hold the combo slightly long) and strays while
-			//the save dialog is up must not type 's' into the search box.
+			//Ctrl+S / Ctrl+Shift+S run from CheckActions on the first keydown.
+			//Auto-repeat keydowns (hold the combo slightly long) and repeats that
+			//land after the save dialog closed must not type 's' into the search box.
+			return TRUE;
+		}
+		else if (pMsg->message == WM_CHAR &&
+			(pMsg->wParam == 's' || pMsg->wParam == 'S') &&
+			GetTickCount() < m_suppressSearchCharUntil)
+		{
 			return TRUE;
 		}
 		else if (pMsg->message == WM_CHAR)
@@ -4609,7 +4617,11 @@ bool CQPasteWnd::DoExportToTextFile()
 
 	m_bHideWnd = false;
 
-	if (GetSaveFileName(&ofn))
+	BOOL bSaved = GetSaveFileName(&ofn);
+	//The save dialog eats the message loop for a while; auto-repeat 'S'
+	//keydowns that land after it closes must not type into the search box.
+	m_suppressSearchCharUntil = GetTickCount() + 800;
+	if (bSaved)
 	{
 		using namespace nsPath;
 		CString startingFilePath = ofn.lpstrFile;
@@ -5682,7 +5694,11 @@ bool CQPasteWnd::DoExportToBitMapFile()
 
 	m_bHideWnd = false;
 
-	if (GetSaveFileName(&ofn))
+	BOOL bSaved = GetSaveFileName(&ofn);
+	//The save dialog eats the message loop for a while; auto-repeat 'S'
+	//keydowns that land after it closes must not type into the search box.
+	m_suppressSearchCharUntil = GetTickCount() + 800;
+	if (bSaved)
 	{
 		CWaitCursor wait;
 
