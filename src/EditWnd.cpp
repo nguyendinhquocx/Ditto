@@ -5,6 +5,7 @@
 #include "CP_Main.h"
 #include "EditWnd.h"
 #include ".\editwnd.h"
+#include "MainFrm.h"
 #include "SaveAnimation.h"
 #include "ProcessPaste.h"
 
@@ -414,6 +415,42 @@ void CEditWnd::OnNew()
 	AddItem(-1);
 }
 
+//Ctrl+Q: save the active tab, close the tab (and the window when it was the
+//last tab), then bring the main Ditto list back up. No save prompt.
+void CEditWnd::OnForceClose()
+{
+	int activeTab = m_tabControl.GetActiveTab();
+	if(activeTab >= 0 && activeTab < (int)m_edits.size())
+	{
+		CDittoRulerRichEditCtrl *pEdit = m_edits[activeTab];
+		if(pEdit)
+		{
+			pEdit->SaveToDB(m_updateDescriptionButton.GetCheck());
+
+			m_tabControl.DeleteItem(activeTab);
+			pEdit->DestroyWindow();
+			delete pEdit;
+			pEdit = NULL;
+			m_edits.erase(m_edits.begin() + activeTab);
+		}
+	}
+
+	if(m_edits.size() <= 0)
+	{
+		CWnd *pParent = GetParent();
+		if(pParent)
+		{
+			pParent->SendMessage(WM_CLOSE, 0, 0);
+		}
+
+		CWnd *pMain = AfxGetMainWnd();
+		if(pMain != NULL)
+		{
+			((CMainFrame *)pMain)->m_quickPaste.ShowQPasteWnd(pMain, true, false, TRUE);
+		}
+	}
+}
+
 void CEditWnd::OnSaveCloseClipboard()
 {
 	if(DoSave())
@@ -469,6 +506,16 @@ BOOL CEditWnd::PreTranslateMessage(MSG* pMsg)
 			if(CONTROL_PRESSED)
 			{
 				OnNew();
+			}
+		}
+		else if(pMsg->wParam == 'Q')
+		{
+			if(CONTROL_PRESSED)
+			{
+				//Back to the main list without saving and without the
+				//save prompt, even when the edit is dirty.
+				OnForceClose();
+				return TRUE;
 			}
 		}
 	}

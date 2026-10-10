@@ -1715,7 +1715,8 @@ void CGetSetOptions::SetMaxClipSizeInBytes(long lSize)
 
 CString CGetSetOptions::GetLanguageFile()
 {
-	return GetProfileString("LanguageFile", "");
+	//Local build default: Vietnamese out of the box
+	return GetProfileString("LanguageFile", "Vietnamese");
 }
 
 void CGetSetOptions::SetLanguageFile(CString csLanguage)
@@ -2071,7 +2072,8 @@ void CGetSetOptions::SetTheme(CString csTheme)
 
 CString CGetSetOptions::GetTheme()
 {
-	return GetProfileString(_T("Theme2"), "");
+	//Local build default: clean white Minimalist theme out of the box
+	return GetProfileString(_T("Theme2"), "Minimalist");
 }
 
 long CGetSetOptions::GetKeyStateWaitTimerCount()
@@ -3255,14 +3257,9 @@ BOOL CGetSetOptions::SetEditWndPoint(CPoint point)
 
 void CGetSetOptions::GetEditWndPoint(CPoint& point)
 {
-	point.x = GetResolutionProfileLong("EditWndX", 100);
-	point.y = GetResolutionProfileLong("EditWndY", 100);
-
-	if (point.x <= 0 && point.y <= 0)
-	{
-		point.x = 100;
-		point.y = 100;
-	}
+	//-1 means "never placed yet" - ShowEditWnd centers the window on first run
+	point.x = GetResolutionProfileLong("EditWndX", -1);
+	point.y = GetResolutionProfileLong("EditWndY", -1);
 }
 
 void CGetSetOptions::SetDoNotHideOnDeactivate(BOOL val)

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Ditto_Theme_File Version="3" Author="nguyendinhquocx" Notes="Minimalist - clean white, black text">
+	<CaptionLeft>RGB(255,255,255)</CaptionLeft>
+	<CaptionRight>RGB(255,255,255)</CaptionRight>
+	<CaptionLeftTopMost>RGB(255,255,255)</CaptionLeftTopMost>
+	<CaptionRightTopMost>RGB(255,255,255)</CaptionRightTopMost>
+	<CaptionLeftNotConnected>RGB(190,190,190)</CaptionLeftNotConnected>
+	<CaptionRightNotConnected>RGB(190,190,190)</CaptionRightNotConnected>
+	<CaptionTextColor>RGB(0,0,0)</CaptionTextColor>
+	<ListBoxOddRowsBG>RGB(255,255,255)</ListBoxOddRowsBG>
+	<ListBoxEvenRowsBG>RGB(255,255,255)</ListBoxEvenRowsBG>
+	<ListBoxOddRowsText>RGB(0,0,0)</ListBoxOddRowsText>
+	<ListBoxEvenRowsText>RGB(0,0,0)</ListBoxEvenRowsText>
+	<ListBoxSelectedBG>RGB(229,229,229)</ListBoxSelectedBG>
+	<ListBoxSelectedNoFocusBG>RGB(238,238,238)</ListBoxSelectedNoFocusBG>
+	<ListBoxSelectedText>RGB(0,0,0)</ListBoxSelectedText>
+	<ListBoxSelectedNoFocusText>RGB(0,0,0)</ListBoxSelectedNoFocusText>
+	<ListBoxSeparator>RGB(228,228,228)</ListBoxSeparator>
+	<ClipPastedColor>RGB(130,130,130)</ClipPastedColor>
+	<MainWindowBG>RGB(255,255,255)</MainWindowBG>
+	<SearchTextBoxFocusBG>RGB(255,255,255)</SearchTextBoxFocusBG>
+	<SearchTextBoxFocusText>RGB(0,0,0)</SearchTextBoxFocusText>
+	<SearchTextBoxFocusBorder>RGB(0,0,0)</SearchTextBoxFocusBorder>
+	<SearchTextHighlight>RGB(0,0,0)</SearchTextHighlight>
+	<Border>RGB(170,170,170)</Border>
+	<BorderTopMost>RGB(0,0,0)</BorderTopMost>
+	<BorderNotConnected>RGB(140,140,140)</BorderNotConnected>
+	<GroupTreeBG>RGB(255,255,255)</GroupTreeBG>
+	<GroupTreeText>RGB(0,0,0)</GroupTreeText>
+	<CaptionSize>26</CaptionSize>
+	<CaptionFontSize>13</CaptionFontSize>
+	<DescriptionWindowBG>RGB(255,255,255)</DescriptionWindowBG>
+	<DescriptionWindowText>RGB(0,0,0)</DescriptionWindowText>
+</Ditto_Theme_File>

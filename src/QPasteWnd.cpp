@@ -415,7 +415,7 @@ int CQPasteWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	m_search.Create(WS_TABSTOP | WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL, CRect(0, 0, 0, 0), this, ID_EDIT_SEARCH);
 	m_search.SetDpiInfo(&m_DittoWindow.m_dpi);
-	m_search.SetPromptText(theApp.m_Language.GetString(_T("Search"), _T("Search")));
+	m_search.SetPromptText(_T("/image /link /today"));
 	::SHAutoComplete(m_search.m_hWnd, SHACF_AUTOSUGGEST_FORCE_OFF);
 	SetSearchImages();
 	m_search.LoadPastSearches(CGetSetOptions::GetPastSearchXml());
@@ -3234,6 +3234,15 @@ BOOL CQPasteWnd::PreTranslateMessage(MSG* pMsg)
 		{
 			return TRUE;
 		}
+		else if (pMsg->message == WM_KEYDOWN &&
+			pMsg->wParam == 'S' &&
+			(GetKeyState(VK_CONTROL) & 0x8000))
+		{
+			//Ctrl+S / Ctrl+Shift+S run from CheckActions on the first keydown;
+			//auto-repeat keydowns (hold the combo slightly long) and strays while
+			//the save dialog is up must not type 's' into the search box.
+			return TRUE;
+		}
 		else if (pMsg->message == WM_CHAR)
 		{
 			if (pMsg->hwnd == m_lstHeader.m_hWnd)
@@ -3408,8 +3417,32 @@ bool CQPasteWnd::DoAction(CAccel a)
 		ret = DoSelectRightSideAndDoCompare();
 		break;
 	case ActionEnums::EXPORT_TO_TEXT_FILE:
-		ret = DoExportToTextFile();
-		break;
+	{
+		//Smart export: save the selected clip as an image when it holds image
+		//data, otherwise as text. One shortcut (Ctrl+S) covers both.
+		bool bExportAsImage = false;
+		CClipIDs smartIds;
+		m_lstHeader.GetSelectionItemData(smartIds);
+		if (smartIds.GetSize() > 0)
+		{
+			CClip smartClip;
+			if (smartClip.LoadFormats(smartIds[0]))
+			{
+				bExportAsImage = smartClip.ContainsClipFormat(CF_DIB) ||
+					smartClip.ContainsClipFormat(theApp.m_PNG_Format);
+			}
+		}
+
+		if (bExportAsImage)
+		{
+			ret = DoExportToBitMapFile();
+		}
+		else
+		{
+			ret = DoExportToTextFile();
+		}
+	}
+	break;
 	case ActionEnums::EXPORT_TO_QR_CODE:
 		ret = DoExportToQRCode();
 		break;

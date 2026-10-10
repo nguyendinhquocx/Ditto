@@ -25,6 +25,7 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 #define ROW_BOTTOM_BORDER		4
+#define ROW_EXTRA_HEIGHT		12
 #define ROW_LEFT_BORDER			3
 #define COLOR_SHADOW			RGB(245, 245, 245)
 #define DUMMY_COL_WIDTH			2
@@ -420,7 +421,7 @@ void CQListCtrl::MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct)
 	GetTextMetrics(hDC, &tm);
 	if (m_windowDpi != NULL)
 	{
-		lpMeasureItemStruct->itemHeight = ((tm.tmHeight + tm.tmExternalLeading) * m_linesPerRow) + m_windowDpi->Scale(ROW_BOTTOM_BORDER);
+		lpMeasureItemStruct->itemHeight = ((tm.tmHeight + tm.tmExternalLeading) * m_linesPerRow) + m_windowDpi->Scale(ROW_BOTTOM_BORDER) + m_windowDpi->Scale(ROW_EXTRA_HEIGHT);
 		m_rowHeight = lpMeasureItemStruct->itemHeight;
 	}
 	SelectObject(hDC, hFontOld);
@@ -652,6 +653,15 @@ void CQListCtrl::OnCustomdrawList(NMHDR* pNMHDR, LRESULT* pResult)
 
 		if (nOldBKMode > -1)
 			pDC->SetBkMode(nOldBKMode);
+
+		//Thin separator line under each row (opt-in via theme color
+		//"ListBoxSeparator" - only drawn when the theme defines it).
+		if (m_windowDpi != NULL && CGetSetOptions::m_Theme.HasRowSeparator())
+		{
+			CRect rcSep(rcItem);
+			rcSep.top = rcSep.bottom - max(1, m_windowDpi->Scale(1));
+			pDC->FillSolidRect(rcSep, CGetSetOptions::m_Theme.ListBoxSeparator());
+		}
 
 		*pResult = CDRF_SKIPDEFAULT;    // We've painted everything.
 	}

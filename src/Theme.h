@@ -30,6 +30,8 @@ public:
 	COLORREF ListBoxSelectedNoFocusBG() const { return m_ListBoxSelectedNoFocusBG; }
 	COLORREF ListBoxSelectedText() const { return m_ListBoxSelectedText; }
 	COLORREF ListBoxSelectedNoFocusText() const { return m_ListBoxSelectedNoFocusText; }
+	BOOL HasRowSeparator() const { return m_hasRowSeparator; }
+	COLORREF ListBoxSeparator() const { return m_ListBoxSeparator; }
 	COLORREF ClipPastedColor() const { return m_clipPastedColor; }
 
 	COLORREF ListSmallQuickPasteIndexColor() const { return m_listSmallQuickPasteIndexColor;  }
@@ -83,6 +85,8 @@ protected:
 	COLORREF m_ListBoxSelectedNoFocusBG;
 	COLORREF m_ListBoxSelectedText;
 	COLORREF m_ListBoxSelectedNoFocusText;	
+	BOOL m_hasRowSeparator;
+	COLORREF m_ListBoxSeparator;
 	COLORREF m_clipPastedColor;
 	COLORREF m_listSmallQuickPasteIndexColor;
 	COLORREF m_mainWindowBG;

@@ -49,6 +49,7 @@ public:
 	afx_msg void OnNew();
 	afx_msg void OnSaveCloseClipboard();
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
+	void OnForceClose();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };
 

@@ -1173,7 +1173,26 @@ void CMainFrame::ShowEditWnd(CClipIDs& Ids)
 			CGetSetOptions::GetEditWndSize(sz);
 			CGetSetOptions::GetEditWndPoint(pt);
 			CRect cr(pt, sz);
-			EnsureWindowVisible(&cr);
+
+			if (pt.x < 0 || pt.y < 0)
+			{
+				//Never placed yet: generous editing size, centered on the work area
+				CRect rcWork;
+				SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0);
+				int w = max(900, rcWork.Width() * 62 / 100);
+				int h = max(700, rcWork.Height() * 70 / 100);
+				w = min(w, rcWork.Width() * 92 / 100);
+				h = min(h, rcWork.Height() * 92 / 100);
+				sz = CSize(w, h);
+				CPoint center((rcWork.left + rcWork.right - sz.cx) / 2,
+					(rcWork.top + rcWork.bottom - sz.cy) / 2);
+				cr = CRect(center, sz);
+			}
+			else
+			{
+				EnsureWindowVisible(&cr);
+			}
+
 			m_pEditFrameWnd->MoveWindow(cr);
 		}
 

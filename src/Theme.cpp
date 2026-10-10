@@ -44,6 +44,8 @@ void CTheme::LoadDefaults()
 	m_ListBoxSelectedNoFocusBG = RGB(204, 204, 204);
 	m_ListBoxSelectedText = RGB(0, 0, 0);
 	m_ListBoxSelectedNoFocusText = RGB(0, 0, 0);
+	m_hasRowSeparator = FALSE;
+	m_ListBoxSeparator = RGB(230, 230, 230);
 	m_clipPastedColor = RGB(0, 255, 0);
 	m_listSmallQuickPasteIndexColor = RGB(180, 180, 180);
 	m_mainWindowBG = RGB(240, 240, 240);
@@ -162,6 +164,7 @@ bool CTheme::Load(CString csTheme, bool bHeaderOnly, bool bCheckLastWriteTime)
 	LoadColor(ItemHeader, "ListBoxEvenRowsBG", m_ListBoxEvenRowsBG);
 	LoadColor(ItemHeader, "ListBoxOddRowsText", m_ListBoxOddRowsText);
 	LoadColor(ItemHeader, "ListBoxEvenRowsText", m_ListBoxEvenRowsText);
+	m_hasRowSeparator = LoadColor(ItemHeader, "ListBoxSeparator", m_ListBoxSeparator);
 	LoadColor(ItemHeader, "ListBoxSelectedBG", m_ListBoxSelectedBG);
 	LoadColor(ItemHeader, "ListBoxSelectedNoFocusBG", m_ListBoxSelectedNoFocusBG);
 	LoadColor(ItemHeader, "ListBoxSelectedText", m_ListBoxSelectedText);
