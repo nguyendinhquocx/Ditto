@@ -67,6 +67,10 @@ bool CDittoRulerRichEditCtrl::LoadItem(long lID, CString csDesc)
 		}
 	}
 
+	//Đặt con trỏ soạn thảo ở cuối nội dung - quen thuộc khi tiếp tục chỉnh sửa
+	long nTextLen = m_rtf.GetTextLength();
+	m_rtf.SetSel(nTextLen, nTextLen);
+
 	m_rtf.SetModify(FALSE);
 
 	return bSetText;

@@ -416,16 +416,19 @@ void CEditWnd::OnNew()
 }
 
 //Ctrl+Q: save the active tab, close the tab (and the window when it was the
-//last tab), then bring the main Ditto list back up. No save prompt.
+//last tab), then bring the main Ditto list back up with the edited clip
+//selected. No save prompt.
 void CEditWnd::OnForceClose()
 {
 	int activeTab = m_tabControl.GetActiveTab();
+	int focusId = -1;
 	if(activeTab >= 0 && activeTab < (int)m_edits.size())
 	{
 		CDittoRulerRichEditCtrl *pEdit = m_edits[activeTab];
 		if(pEdit)
 		{
-			pEdit->SaveToDB(m_updateDescriptionButton.GetCheck());
+			DoSave();
+			focusId = m_lastSaveID;
 
 			m_tabControl.DeleteItem(activeTab);
 			pEdit->DestroyWindow();
@@ -437,6 +440,13 @@ void CEditWnd::OnForceClose()
 
 	if(m_edits.size() <= 0)
 	{
+		if(focusId > 0)
+		{
+			//SelectFocusID (runs after the list reload) will scroll to and
+			//select this clip instead of leaving the selection at the top.
+			theApp.m_FocusID = focusId;
+		}
+
 		CWnd *pParent = GetParent();
 		if(pParent)
 		{

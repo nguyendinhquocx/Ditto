@@ -15,7 +15,7 @@
 	<ListBoxSelectedNoFocusBG>RGB(238,238,238)</ListBoxSelectedNoFocusBG>
 	<ListBoxSelectedText>RGB(0,0,0)</ListBoxSelectedText>
 	<ListBoxSelectedNoFocusText>RGB(0,0,0)</ListBoxSelectedNoFocusText>
-	<ListBoxSeparator>RGB(228,228,228)</ListBoxSeparator>
+	<ListBoxSeparator>RGB(238,238,238)</ListBoxSeparator>
 	<ClipPastedColor>RGB(130,130,130)</ClipPastedColor>
 	<MainWindowBG>RGB(255,255,255)</MainWindowBG>
 	<SearchTextBoxFocusBG>RGB(255,255,255)</SearchTextBoxFocusBG>
