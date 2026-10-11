@@ -5,6 +5,10 @@
 #include ".\dittorulerricheditctrl.h"
 #include "CopyProperties.h"
 
+#ifndef EM_SETSCROLLPOS
+#define EM_SETSCROLLPOS  (WM_USER + 222)
+#endif
+
 CDittoRulerRichEditCtrl::CDittoRulerRichEditCtrl(void)
 {	
 	m_lID = -1;
@@ -67,9 +71,15 @@ bool CDittoRulerRichEditCtrl::LoadItem(long lID, CString csDesc)
 		}
 	}
 
-	//Đặt con trỏ soạn thảo ở cuối nội dung - quen thuộc khi tiếp tục chỉnh sửa
+	//Caret ở cuối nội dung (tiện gõ tiếp), nhưng viewport cuộn về đầu
+	//để đọc được toàn bộ từ trên xuống; gõ sẽ tự cuộn caret vào view.
 	long nTextLen = m_rtf.GetTextLength();
 	m_rtf.SetSel(nTextLen, nTextLen);
+	m_rtf.LineScroll(-m_rtf.GetLineCount());
+
+	//Scroll ngang về trái (dòng cuối có thể dài hơn viewport)
+	POINT ptScroll = { 0, 0 };
+	m_rtf.SendMessage(EM_SETSCROLLPOS, 0, (LPARAM)&ptScroll);
 
 	m_rtf.SetModify(FALSE);
 
