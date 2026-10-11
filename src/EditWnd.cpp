@@ -427,7 +427,12 @@ void CEditWnd::OnForceClose()
 		CDittoRulerRichEditCtrl *pEdit = m_edits[activeTab];
 		if(pEdit)
 		{
-			DoSave();
+			//Save failed: keep the tab and its content, do not close (Ctrl+Q
+			//must never lose an edited clip because the DB write errored).
+			if(!DoSave())
+			{
+				return;
+			}
 			focusId = m_lastSaveID;
 			Log(StrF(_T("OnForceClose - m_lastSaveID: %d, focusId: %d"), m_lastSaveID, focusId));
 
@@ -535,8 +540,13 @@ BOOL CEditWnd::PreTranslateMessage(MSG* pMsg)
 		{
 			if(CONTROL_PRESSED)
 			{
-				//Back to the main list without saving and without the
-				//save prompt, even when the edit is dirty.
+				//Bit 30 is set on auto-repeat keydowns - a held Ctrl+Q must close
+				//only the active tab, not one tab per repeat.
+				if(pMsg->lParam & 0x40000000)
+				{
+					return TRUE;
+				}
+				//Back to the main list; saves the tab first.
 				OnForceClose();
 				return TRUE;
 			}

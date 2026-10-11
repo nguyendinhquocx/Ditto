@@ -3428,18 +3428,23 @@ bool CQPasteWnd::DoAction(CAccel a)
 		break;
 	case ActionEnums::EXPORT_TO_TEXT_FILE:
 	{
-		//Smart export: save the selected clip as an image when it holds image
-		//data, otherwise as text. One shortcut (Ctrl+S) covers both.
+		//Smart export: when exactly one clip is selected, save it as an image
+		//if it holds image data, otherwise as text. With a multi-clip selection
+		//the format differs per clip, so fall back to the text exporter (the
+		//exporters process the whole selection as one type).
 		bool bExportAsImage = false;
-		CClipIDs smartIds;
-		m_lstHeader.GetSelectionItemData(smartIds);
-		if (smartIds.GetSize() > 0)
+		if (m_lstHeader.GetSelectedCount() == 1)
 		{
-			CClip smartClip;
-			if (smartClip.LoadFormats(smartIds[0]))
+			CClipIDs smartIds;
+			m_lstHeader.GetSelectionItemData(smartIds);
+			if (smartIds.GetSize() > 0)
 			{
-				bExportAsImage = smartClip.ContainsClipFormat(CF_DIB) ||
-					smartClip.ContainsClipFormat(theApp.m_PNG_Format);
+				CClip smartClip;
+				if (smartClip.LoadFormats(smartIds[0]))
+				{
+					bExportAsImage = smartClip.ContainsClipFormat(CF_DIB) ||
+						smartClip.ContainsClipFormat(theApp.m_PNG_Format);
+				}
 			}
 		}
 
@@ -4615,7 +4620,7 @@ bool CQPasteWnd::DoExportToTextFile()
 	ofn.nMaxFileTitle = 0;
 	ofn.lpstrInitialDir = szDir;
 	ofn.lpstrDefExt = _T("txt");
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
 
 	m_bHideWnd = false;
 
@@ -5692,7 +5697,7 @@ bool CQPasteWnd::DoExportToBitMapFile()
 	ofn.nMaxFileTitle = 0;
 	ofn.lpstrInitialDir = szDir;
 	ofn.lpstrDefExt = _T("png");
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR | OFN_NOCHANGEDIR;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR | OFN_NOCHANGEDIR;
 
 	m_bHideWnd = false;
 

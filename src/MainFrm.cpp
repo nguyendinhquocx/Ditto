@@ -1174,7 +1174,7 @@ void CMainFrame::ShowEditWnd(CClipIDs& Ids)
 			CGetSetOptions::GetEditWndPoint(pt);
 			CRect cr(pt, sz);
 
-			if (pt.x < 0 || pt.y < 0)
+			if (pt.x == -1 && pt.y == -1)
 			{
 				//Never placed yet: generous editing size, centered on the work area
 				CRect rcWork;
