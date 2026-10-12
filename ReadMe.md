@@ -1,60 +1,64 @@
-# Ditto — Bản build cá nhân hoá (Việt hoá +slash-filter + Minimalist)
+# Ditto — Custom Build (Vietnamese · Slash Filters · Minimalist UI)
 
-Fork từ [sabrogden/Ditto](https://github.com/sabrogden/Ditto) — clipboard manager cho Windows, build từ source với bộ tuỳ biến cá nhân:
+A personalized fork of [sabrogden/Ditto](https://github.com/sabrogden/Ditto), the open-source clipboard manager for Windows. This fork ships a customized build on top of upstream `master`: full Vietnamese localization, command-style search filters, a refined white theme, and a set of daily-driver workflow fixes.
 
-## Tuỳ biến so với bản gốc
+> All credit for the core product belongs to Scott Brogden (sabrogden) and upstream contributors. This repository only carries the customizations listed below.
 
-- **Tiếng Việt đầy đủ** — dịch 100% 581 chuỗi giao diện (18 section), đặt làm ngôn ngữ mặc định khi cài.
-- **Theme Minimalist** — nền trắng sạch, chữ đen, gạch phân cách hàng mảnh xám, hàng chọn xám nhạt. Theme mặc định khi cài.
-- **Slash-filter trong ô tìm kiếm** — gõ nhanh để lọc theo loại clip:
-  - `/image` — chỉ clip ảnh
-  - `/file` — chỉ clip file (CF_HDROP)
-  - `/text` — chỉ clip text
-  - `/link` — chỉ link (bắt đầu bằng `http`)
-  - `/star` — chỉ clip giữ (never auto delete)
-  - `/today` — chỉ clip hôm nay
-  - Kết hợp được: `/image /today`, `/link từ khoá`. Gõ sai prefix (`/images`) → tìm text như thường. `/q` giữ nguyên hành vi cũ.
-- **Ctrl+S thông minh** — lưu clip đang chọn ra file, tự chọn định dạng theo clip: ảnh → `.png`, text → `.txt`.
-- **Ctrl+E / Ctrl+Q** — Ctrl+E sửa clip (cửa sổ lớn, căn giữa màn hình lần đầu, nhớ vị trí sau đó, mở ở đầu nội dung + caret cuối). Ctrl+Q lưu + đóng + quay lại danh sách, focus đúng clip vừa sửa.
-- **Icon mới** — nền trắng bo tròn, 2 nét chéo đen (Tabler slashes).
-- **Danh sách dễ đọc** — hàng cao hơn ~40%, gạch phân cách mảnh, ảnh thumbnail lớn theo.
-- **Popup nhớ vị trí** — mở tại vị trí lần cuối sử dụng, không nhảy theo con trỏ.
+## What's different from upstream
 
-## Tải về
+| Area | Change |
+|---|---|
+| Localization | Complete Vietnamese UI translation — 581 strings / 18 sections, set as the default language |
+| Theme | New **Minimalist** theme (flat white, black text, hairline gray row separators, light-gray selection) set as default |
+| Search | Slash type filters: `/image`, `/file`, `/text`, `/link`, `/star`, `/today` |
+| Save | **Smart Ctrl+S** — saves the selected clip to a file, auto-picking the format: image → `.png`, text → `.txt`; `Ctrl+Shift+S` forces image export |
+| Editor | `Ctrl+E` opens the clip editor (centered window, remembers position, caret at end of content); `Ctrl+Q` saves, closes and re-selects the edited clip in the list |
+| List | ~40% taller rows, hairline separators, larger image thumbnails |
+| Popup | Window remembers its last position instead of jumping to the cursor |
+| Icons | New rounded app icon plus a disconnected-tray variant |
+| Build | Platform toolset fallback v145 → v143 for local VS 2022 builds |
 
-Tải bản build mới nhất trong tab [Releases](https://github.com/nguyendinhquocx/Ditto/releases) — giải nén và chạy `Ditto.exe` trực tiếp (không cần cài đặt).
+## Slash filter grammar
 
-Yêu cầu: Windows 10/11 x64, [Visual C++ Redistributable 2015-2022](https://aka.ms/vs/17/release/vc_redist.x64.exe).
+A filter is recognized only as the **first token** of the search box. Anything else is treated as a plain text search.
 
-## Cài đặt thay bản cũ
+| Query | Result |
+|---|---|
+| `/image` | Clips containing an image format |
+| `/image logo` | Image clips matching `logo` |
+| `/file` | File drops (CF_HDROP) |
+| `/text` | Text clips |
+| `/link` | Clips starting with `http` |
+| `/star` | Starred (never auto-delete) clips |
+| `/today` | Clips copied today |
+| `/image /today` | One type filter combined with date/star |
+| `/images` | Unknown prefix → plain text search |
+| `/q name` | Upstream Quick Paste filter (unchanged) |
 
-1. Thoát Ditto bản cũ (system tray → Exit). Settings + database nằm ở `%APPDATA%\Ditto` và registry `HKCU\Software\Ditto` — gỡ bản cũ KHÔNG ảnh hưởng nếu giữ chúng.
-2. Giải nén bản build vào thư mục bất kỳ (giữ nguyên cấu trúc `Language\`, `Themes\`, `Addins\`).
-3. Chạy `Ditto.exe` — tự đọc lịch sử clip + settings cũ.
-4. Bật khởi động cùng Windows: phím tắt shortcut vào `shell:startup` hoặc registry `HKCU\...\Run`.
+## Download & run
 
-Ngôn ngữ tiếng Việt + theme Minimalist được bật sẵn sau lần chạy đầu.
+Grab the latest `Ditto-custom-x64.zip` from [Releases](https://github.com/nguyendinhquocx/Ditto/releases), extract, and run `Ditto-custom\Ditto.exe` — no installer needed. An existing Ditto database (`%APPDATA%\Ditto\Ditto.db`) is picked up automatically.
 
-## Build từ source
+Requirements: Windows 10/11 x64 and the [Visual C++ 2015-2022 Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe).
 
-Yêu cầu: Visual Studio 2022 (17.14+) với workload Desktop C++, component **MFC + ATL for v143 build tools**.
+## Build from source
+
+- Visual Studio 2022 with the **MFC and ATL** components (v143 toolset)
+- NuGet packages (`libpng`, `zlib`) restore automatically
 
 ```
-nuget restore CP_Main_10.sln -PackagesDirectory packages
-msbuild CP_Main_10.sln /p:Configuration=Release /p:Platform=x64 /m
+vswhere -latest -requires Microsoft.Component.MSBuild -find "MSBuild\**\Bin\MSBuild.exe"
+msbuild CP_Main_10.sln /p:Configuration=Release /p:Platform=x64 /p:RestorePackagesConfig=true /m
 ```
 
-Output: `Release64\Ditto.exe`. Copy `Debug\Language\` + `Debug\Themes\` cạnh exe nếu chưa có.
+Output lands in `Release64\`. Exit any running Ditto instance before rebuilding (file lock).
 
-Toolset: **v143** (fallback từ v145 của upstream — sửa trong 6 file `.vcxproj`).
+## Branch & upstream policy
 
-## Scripts hỗ trợ
+- `master` — the customized default branch; intentionally diverges from upstream.
+- `ai/*` — feature branches (for example `ai/slash-filter`), merged into `master` after review.
+- **This fork is not auto-synced with upstream.** Upstream changes are pulled manually per milestone: both codebases patch `src/QPasteWnd.cpp` heavily, so an automated merge would silently resolve conflicts on our side and drop upstream fixes. When contributing back upstream (translations, type filters), clean branches are cut from `upstream/master`, not from `master`.
 
-- `docs/specs/.working/SPEC-2026-10-10-ditto-customize/tools/diff_language.py` — đối chiếu file ngôn ngữ với English.xml (gate bắt buộc khi sửa bản dịch).
-- `docs/specs/.working/SPEC-2026-10-10-ditto-customize/tools/render_icon.py` — tái tạo bộ icon từ SVG.
+## License
 
-## Upstream
-
-- Base: [sabrogden/Ditto](https://github.com/sabrogden/Ditto) master (`a80fd35`)
-- Toàn bộ thay đổi nằm trong branch `ai/slash-filter` — lịch sử commit rõ ràng từng tính năng, thuận tiện cho việc tách PR upstream sau này (bản dịch + slash-filter).
-- Cảm ơn [Scott Brogden](https://github.com/sabrogden) và cộng đồng Ditto.
+GPL-3.0, inherited from upstream. See [LICENSE](LICENSE).
