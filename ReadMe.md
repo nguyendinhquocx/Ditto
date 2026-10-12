@@ -37,7 +37,7 @@ A filter is recognized only as the **first token** of the search box. Anything e
 
 ## Download & run
 
-Grab the latest `Ditto-custom-x64.zip` from [Releases](https://github.com/nguyendinhquocx/Ditto/releases), extract, and run `Ditto-custom\Ditto.exe` — no installer needed. An existing Ditto database (`%APPDATA%\Ditto\Ditto.db`) is picked up automatically.
+Grab the latest `Ditto-custom-x64.zip` from [Releases](https://github.com/nguyendinhquocx/Ditto-X/releases), extract, and run `Ditto-custom\Ditto.exe` — no installer needed. An existing Ditto database (`%APPDATA%\Ditto\Ditto.db`) is picked up automatically.
 
 Requirements: Windows 10/11 x64 and the [Visual C++ 2015-2022 Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe).
 
