@@ -75,6 +75,12 @@ END_MESSAGE_MAP()
 
 BOOL CSymbolEdit::PreTranslateMessage(MSG* pMsg)
 {
+	if (!m_transientStatusText.IsEmpty() &&
+		(pMsg->message == WM_KEYDOWN || pMsg->message == WM_CHAR))
+	{
+		ClearTransientStatus();
+	}
+
 	// TODO: Add your specialized code here and/or call the base class
 	// Intercept Ctrl + Z (Undo), Ctrl + X (Cut), Ctrl + C (Copy), Ctrl + V (Paste) and Ctrl + A (Select All)
 	// before CEdit base class gets a hold of them.
@@ -409,6 +415,23 @@ void CSymbolEdit::SetPromptText(LPCTSTR szText, BOOL redraw)
 		Invalidate(TRUE);
 }
 
+void CSymbolEdit::ShowTransientStatus(CString text)
+{
+	m_transientStatusText = text;
+	Invalidate(TRUE);
+}
+
+void CSymbolEdit::ClearTransientStatus()
+{
+	if (m_transientStatusText.IsEmpty())
+	{
+		return;
+	}
+
+	m_transientStatusText.Empty();
+	Invalidate(TRUE);
+}
+
 void CSymbolEdit::SetPromptTextColor(COLORREF color, BOOL redraw)
 {
 	m_colorPromptText = color;
@@ -500,12 +523,13 @@ void CSymbolEdit::OnPaint()
 
 	CString text;
 	GetWindowText(text);
+	CString displayText = m_transientStatusText.IsEmpty() ? text : m_transientStatusText;
 	CFont* oldFont = NULL;
 
 	//rect.top += 1;
 
 
-	if(this == GetFocus() || text.GetLength() > 0)
+	if (this == GetFocus() || text.GetLength() > 0 || !m_transientStatusText.IsEmpty())
 	{
 		dc.FillSolidRect(rect, CGetSetOptions::m_Theme.SearchTextBoxFocusBG());
 
@@ -520,7 +544,7 @@ void CSymbolEdit::OnPaint()
 		COLORREF oldColor = dc.GetTextColor();
 		dc.SetTextColor(CGetSetOptions::m_Theme.SearchTextBoxFocusText());
 			
-		dc.DrawText(text, textRect, DT_SINGLELINE | DT_INTERNAL | DT_EDITCONTROL | DT_NOPREFIX);
+		dc.DrawText(displayText, textRect, DT_SINGLELINE | DT_INTERNAL | DT_EDITCONTROL | DT_NOPREFIX);
 
 		dc.SelectObject(oldFont);
 		dc.SetTextColor(oldColor);
@@ -531,7 +555,7 @@ void CSymbolEdit::OnPaint()
 	}
 
 
-	if (text.GetLength() == 0 && m_strPromptText.GetLength() > 0)
+	if (displayText.GetLength() == 0 && m_strPromptText.GetLength() > 0)
 	{
 		//if we aren't showing the close icon, then use the full space
 		textRect.right += m_windowDpi->Scale(16);
@@ -721,6 +745,8 @@ void CSymbolEdit::OnLButtonUp(UINT nFlags, CPoint point)
 
 void CSymbolEdit::OnLButtonDown(UINT nFlags, CPoint point)
 {
+	ClearTransientStatus();
+
 	if (m_closeButtonRect.PtInRect(point))
 	{
 		m_mouseDownOnClose = true;

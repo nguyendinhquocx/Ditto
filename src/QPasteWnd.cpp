@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "..\Shared\Tokenizer.h"
+#include "..\Shared\TextConvert.h"
 #include ".\qpastewnd.h"
 #include "ActionEnums.h"
 #include "CF_TextAggregator.h"
@@ -58,6 +59,7 @@ static char THIS_FILE[] = __FILE__;
 #define TIMER_PASTE_FROM_MODIFER	3
 #define TIMER_ERROR_MSG			4
 #define TIMER_DRAG_HIDE_WINDOW	6
+#define TIMER_QUICK_EXPORT_STATUS	8
 #define TIMER_DO_ACTION	7
 
 #define THREAD_DO_QUERY				0
@@ -3246,6 +3248,14 @@ BOOL CQPasteWnd::PreTranslateMessage(MSG* pMsg)
 			//land after the save dialog closed must not type 's' into the search box.
 			return TRUE;
 		}
+		else if (pMsg->message == WM_KEYDOWN &&
+			pMsg->wParam == 'P' &&
+			(GetKeyState(VK_CONTROL) & 0x8000))
+		{
+			//Ctrl+P is a list action; consume it even if export cannot run so it
+			//never leaks into the search box as the letter 'p'.
+			return TRUE;
+		}
 		else if (pMsg->message == WM_CHAR &&
 			(pMsg->wParam == 's' || pMsg->wParam == 'S' ||
 				pMsg->wParam == 'q' || pMsg->wParam == 'Q') &&
@@ -3259,6 +3269,7 @@ BOOL CQPasteWnd::PreTranslateMessage(MSG* pMsg)
 			{
 				bool bStartNewSearch = (::GetFocus() != m_search.m_hWnd);
 				TCHAR ch = (TCHAR)pMsg->wParam;
+				m_search.ClearTransientStatus();
 				m_search.SetFocus();
 				CString csSearch;
 				if (bStartNewSearch == false)
@@ -3466,6 +3477,9 @@ bool CQPasteWnd::DoAction(CAccel a)
 		break;
 	case ActionEnums::EXPORT_TO_BITMAP_FILE:
 		ret = DoExportToBitMapFile();
+		break;
+	case ActionEnums::EXPORT_TO_TEMP_AND_COPY_PATH:
+		ret = DoExportToTempAndCopyPath();
 		break;
 	case ActionEnums::SAVE_CURRENT_CLIPBOARD:
 		ret = DoSaveCurrentClipboard();
@@ -5775,6 +5789,193 @@ bool CQPasteWnd::DoExportToBitMapFile()
 	return ret;
 }
 
+bool CQPasteWnd::DoExportToTempAndCopyPath()
+{
+	if (m_lstHeader.GetSelectedCount() != 1)
+	{
+		return false;
+	}
+
+	CClipIDs ids;
+	m_lstHeader.GetSelectionItemData(ids);
+	if (ids.GetSize() != 1)
+	{
+		return false;
+	}
+
+	CClip clip;
+	// true means text-only formats; image clips would lose CF_DIB/PNG here.
+	if (!clip.LoadFormats(ids[0]))
+	{
+		return false;
+	}
+
+	bool isImage = clip.ContainsClipFormat(CF_DIB) ||
+		clip.ContainsClipFormat(theApp.m_PNG_Format);
+	bool isText = clip.ContainsClipFormat(CF_UNICODETEXT) ||
+		clip.ContainsClipFormat(CF_TEXT);
+	if (!isImage && !isText)
+	{
+		return false;
+	}
+
+	TCHAR tempPath[MAX_PATH] = {};
+	DWORD tempPathLength = ::GetTempPath(MAX_PATH, tempPath);
+	if (tempPathLength == 0 || tempPathLength >= MAX_PATH)
+	{
+		Log(_T("Quick export failed: unable to get the Windows temp path"));
+		return false;
+	}
+
+	CString baseDirectory(tempPath);
+	if (baseDirectory.Right(1) != _T("\\") && baseDirectory.Right(1) != _T("/"))
+	{
+		baseDirectory += _T("\\");
+	}
+
+	CString dittoDirectory = baseDirectory + _T("Ditto-X");
+	if (!::CreateDirectory(dittoDirectory, NULL) && GetLastError() != ERROR_ALREADY_EXISTS)
+	{
+		Log(StrF(_T("Quick export failed: unable to create folder %s"), dittoDirectory));
+		return false;
+	}
+
+	CString handoffDirectory = dittoDirectory + _T("\\Handoff");
+	if (!::CreateDirectory(handoffDirectory, NULL) && GetLastError() != ERROR_ALREADY_EXISTS)
+	{
+		Log(StrF(_T("Quick export failed: unable to create folder %s"), handoffDirectory));
+		return false;
+	}
+
+	CString exportPath;
+	for (int attempt = 0; attempt < 10 && exportPath.IsEmpty(); ++attempt)
+	{
+		TCHAR temporaryFile[MAX_PATH] = {};
+		if (::GetTempFileName(handoffDirectory, _T("dtx"), 0, temporaryFile) == 0)
+		{
+			Log(StrF(_T("Quick export failed: unable to create a temporary file in %s"), handoffDirectory));
+			return false;
+		}
+
+		CString temporaryPath(temporaryFile);
+		int extensionPosition = temporaryPath.ReverseFind(_T('.'));
+		if (extensionPosition < 0)
+		{
+			::DeleteFile(temporaryPath);
+			return false;
+		}
+
+		CString candidatePath = temporaryPath.Left(extensionPosition) +
+			(isImage ? _T(".png") : _T(".txt"));
+		::DeleteFile(temporaryPath);
+		if (!FileExists(candidatePath))
+		{
+			exportPath = candidatePath;
+		}
+	}
+
+	if (exportPath.IsEmpty())
+	{
+		Log(StrF(_T("Quick export failed: unable to find an unused file name in %s"), handoffDirectory));
+		return false;
+	}
+
+	bool fileSaved = false;
+	if (isImage)
+	{
+		fileSaved = clip.WriteImageToFile(exportPath) != FALSE;
+	}
+	else
+	{
+		CString text;
+		if (clip.ContainsClipFormat(CF_UNICODETEXT))
+		{
+			text = clip.GetUnicodeTextFormat();
+		}
+		else
+		{
+			text = CTextConvert::AnsiToUnicode(clip.GetCFTextTextFormat());
+		}
+
+		CStringA utf8 = CTextConvert::UnicodeToUTF8(text);
+		CFile outputFile;
+		if (outputFile.Open(exportPath, CFile::modeWrite | CFile::modeCreate | CFile::typeBinary))
+		{
+			if (!utf8.IsEmpty())
+			{
+				outputFile.Write(utf8.GetString(), static_cast<UINT>(utf8.GetLength()));
+			}
+			outputFile.Close();
+			fileSaved = true;
+		}
+	}
+
+	if (!fileSaved)
+	{
+		::DeleteFile(exportPath);
+		Log(StrF(_T("Quick export failed: unable to write %s"), exportPath));
+		return false;
+	}
+
+	HGLOBAL ignoreFormat = NewGlobalP("Ignore", sizeof("Ignore"));
+	HGLOBAL pathText = NewGlobalP((LPVOID)(LPCTSTR)exportPath,
+		(static_cast<SIZE_T>(exportPath.GetLength()) + 1) * sizeof(TCHAR));
+	if (!::OpenClipboard(m_hWnd))
+	{
+		::GlobalFree(ignoreFormat);
+		::GlobalFree(pathText);
+		::DeleteFile(exportPath);
+		Log(_T("Quick export failed: unable to open the clipboard"));
+		return false;
+	}
+
+	BOOL clipboardEmpty = ::EmptyClipboard();
+	BOOL ignoreMarkerSet = FALSE;
+	BOOL pathSet = FALSE;
+	if (clipboardEmpty)
+	{
+		ignoreMarkerSet = ::SetClipboardData(theApp.m_cfIgnoreClipboard, ignoreFormat) != NULL;
+		if (!ignoreMarkerSet)
+		{
+			::GlobalFree(ignoreFormat);
+		}
+
+		pathSet = ::SetClipboardData(CF_UNICODETEXT, pathText) != NULL;
+		if (!pathSet)
+		{
+			::GlobalFree(pathText);
+		}
+	}
+	else
+	{
+		::GlobalFree(ignoreFormat);
+		::GlobalFree(pathText);
+	}
+	::CloseClipboard();
+
+	if (!pathSet)
+	{
+		::DeleteFile(exportPath);
+		Log(_T("Quick export failed: unable to copy the exported file path"));
+		return false;
+	}
+
+	if (!ignoreMarkerSet)
+	{
+		Log(_T("Quick export warning: Ditto may capture its copied path as a new clip"));
+	}
+
+	ShowQuickExportFeedback();
+	return true;
+}
+
+void CQPasteWnd::ShowQuickExportFeedback()
+{
+	KillTimer(TIMER_QUICK_EXPORT_STATUS);
+	m_search.ShowTransientStatus(_T("Đã copy path"));
+	SetTimer(TIMER_QUICK_EXPORT_STATUS, 1800, NULL);
+}
+
 LRESULT CQPasteWnd::OnCancelFilter(WPARAM wParam, LPARAM lParam)
 {
 	this->DoAction(ActionEnums::CANCELFILTER);
@@ -6777,6 +6978,11 @@ void CQPasteWnd::OnTimer(UINT_PTR nIDEvent)
 		{
 			Log(_T("m_bModifersMoveActive set to false\n"));
 		}
+	}
+	else if (nIDEvent == TIMER_QUICK_EXPORT_STATUS)
+	{
+		KillTimer(TIMER_QUICK_EXPORT_STATUS);
+		m_search.ClearTransientStatus();
 	}
 	else if (nIDEvent == TIMER_ERROR_MSG)
 	{

@@ -131,6 +131,9 @@ CString ActionEnums::EnumDescription(ActionEnumValues value)
 	case EXPORT_TO_BITMAP_FILE:
 		val = "Export To Image File";
 		break;
+	case EXPORT_TO_TEMP_AND_COPY_PATH:
+		val = "Quick Export To Temp And Copy Path";
+		break;
 	case SAVE_CURRENT_CLIPBOARD:
 		val = "Save Current Clipboard";
 		break;
@@ -521,6 +524,8 @@ int ActionEnums::GetDefaultShortCutKeyA(ActionEnumValues value, int pos)
 			return VK_F5;
 		case SET_DRAG_FILE_NAME:
 			return VK_F4;
+		case EXPORT_TO_TEMP_AND_COPY_PATH:
+			return ACCEL_MAKEKEY('P', HOTKEYF_CONTROL);
 		}
 		break;
 	case 1:

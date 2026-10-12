@@ -279,6 +279,8 @@ public:
 	bool DoActionGenerateGuid();
 	bool DoPasteAsImage();
 	bool DoExportToBitMapFile();
+	bool DoExportToTempAndCopyPath();
+	void ShowQuickExportFeedback();
 	bool DoSaveCurrentClipboard();
 	bool DoMoveClipDown();
 	bool DoMoveClipUp();

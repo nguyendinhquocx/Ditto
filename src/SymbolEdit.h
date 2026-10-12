@@ -40,6 +40,7 @@ class CSymbolEdit : public CEdit
 	HICON m_hSymbolIcon;
 	bool m_bInternalIcon;
 	CString m_strPromptText;
+	CString m_transientStatusText;
 	COLORREF m_colorPromptText;
 
 	CBrush m_brush;
@@ -62,6 +63,8 @@ public:
 
 	void SetPromptText(CString text, BOOL redraw = TRUE);
 	void SetPromptText(LPCTSTR szText, BOOL redraw = TRUE);
+	void ShowTransientStatus(CString text);
+	void ClearTransientStatus();
 
 	void SetPromptTextColor(COLORREF color, BOOL redraw = TRUE);
 

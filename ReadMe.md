@@ -12,6 +12,7 @@ A personalized fork of [sabrogden/Ditto](https://github.com/sabrogden/Ditto), th
 | Theme | New **Minimalist** theme (flat white, black text, hairline gray row separators, light-gray selection) set as default |
 | Search | Slash type filters: `/image`, `/file`, `/text`, `/link`, `/star`, `/today` |
 | Save | **Smart Ctrl+S** — saves the selected clip to a file, auto-picking the format: image → `.png`, text → `.txt`; `Ctrl+Shift+S` forces image export |
+| Quick handoff | **Ctrl+P** — exports one selected image as `.png` or text as UTF-8 `.txt` to `%TEMP%\Ditto-X\Handoff`, then copies the absolute path to the clipboard without a save dialog |
 | Editor | `Ctrl+E` opens the clip editor (centered window, remembers position, caret at end of content); `Ctrl+Q` saves, closes and re-selects the edited clip in the list |
 | List | ~40% taller rows, hairline separators, larger image thumbnails |
 | Popup | Window remembers its last position instead of jumping to the cursor |
