@@ -3249,11 +3249,11 @@ BOOL CQPasteWnd::PreTranslateMessage(MSG* pMsg)
 			return TRUE;
 		}
 		else if (pMsg->message == WM_KEYDOWN &&
-			pMsg->wParam == 'P' &&
+			pMsg->wParam == 'X' &&
 			(GetKeyState(VK_CONTROL) & 0x8000))
 		{
-			//Ctrl+P is a list action; consume it even if export cannot run so it
-			//never leaks into the search box as the letter 'p'.
+			//Ctrl+X is a list action; consume it even if export cannot run so it
+			//never leaks into the search box as the letter 'x'.
 			return TRUE;
 		}
 		else if (pMsg->message == WM_CHAR &&
@@ -5965,14 +5965,14 @@ bool CQPasteWnd::DoExportToTempAndCopyPath()
 		Log(_T("Quick export warning: Ditto may capture its copied path as a new clip"));
 	}
 
-	ShowQuickExportFeedback();
+	ShowQuickExportFeedback(exportPath);
 	return true;
 }
 
-void CQPasteWnd::ShowQuickExportFeedback()
+void CQPasteWnd::ShowQuickExportFeedback(const CString& copiedPath)
 {
 	KillTimer(TIMER_QUICK_EXPORT_STATUS);
-	m_search.ShowTransientStatus(_T("Đã copy path"));
+	m_search.ShowTransientStatus(copiedPath);
 	SetTimer(TIMER_QUICK_EXPORT_STATUS, 1800, NULL);
 }
 

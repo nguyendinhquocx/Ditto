@@ -280,7 +280,7 @@ public:
 	bool DoPasteAsImage();
 	bool DoExportToBitMapFile();
 	bool DoExportToTempAndCopyPath();
-	void ShowQuickExportFeedback();
+	void ShowQuickExportFeedback(const CString& copiedPath);
 	bool DoSaveCurrentClipboard();
 	bool DoMoveClipDown();
 	bool DoMoveClipUp();

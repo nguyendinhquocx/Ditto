@@ -525,7 +525,7 @@ int ActionEnums::GetDefaultShortCutKeyA(ActionEnumValues value, int pos)
 		case SET_DRAG_FILE_NAME:
 			return VK_F4;
 		case EXPORT_TO_TEMP_AND_COPY_PATH:
-			return ACCEL_MAKEKEY('P', HOTKEYF_CONTROL);
+			return ACCEL_MAKEKEY('X', HOTKEYF_CONTROL);
 		}
 		break;
 	case 1:

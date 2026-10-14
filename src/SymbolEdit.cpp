@@ -529,9 +529,18 @@ void CSymbolEdit::OnPaint()
 	//rect.top += 1;
 
 
-	if (this == GetFocus() || text.GetLength() > 0 || !m_transientStatusText.IsEmpty())
+	bool drawSearchText = this == GetFocus() || text.GetLength() > 0;
+	bool showTransientStatus = !m_transientStatusText.IsEmpty();
+	if (drawSearchText || showTransientStatus)
 	{
-		dc.FillSolidRect(rect, CGetSetOptions::m_Theme.SearchTextBoxFocusBG());
+		if (drawSearchText)
+		{
+			dc.FillSolidRect(rect, CGetSetOptions::m_Theme.SearchTextBoxFocusBG());
+		}
+		else
+		{
+			dc.FillSolidRect(rect, CGetSetOptions::m_Theme.MainWindowBG());
+		}
 
 		//CBrush borderBrush(CGetSetOptions::m_Theme.SearchTextBoxFocusBorder());
 		//dc.FrameRect(rect, &borderBrush);
@@ -539,12 +548,22 @@ void CSymbolEdit::OnPaint()
 		//rect.DeflateRect(1, 1, 1, 1);
 		//textRect.DeflateRect(0, 1, 1, 1);
 
-		oldFont = dc.SelectObject(GetFont());		
-
 		COLORREF oldColor = dc.GetTextColor();
-		dc.SetTextColor(CGetSetOptions::m_Theme.SearchTextBoxFocusText());
-			
-		dc.DrawText(displayText, textRect, DT_SINGLELINE | DT_INTERNAL | DT_EDITCONTROL | DT_NOPREFIX);
+		if (showTransientStatus)
+		{
+			oldFont = dc.SelectObject(&m_fontPrompt);
+			dc.SetTextColor(m_colorPromptText);
+			CRect promptRect(textRect);
+			promptRect.right += m_windowDpi->Scale(16);
+			dc.DrawText(m_transientStatusText, promptRect,
+				DT_LEFT | DT_SINGLELINE | DT_EDITCONTROL | DT_VCENTER | DT_NOPREFIX);
+		}
+		else
+		{
+			oldFont = dc.SelectObject(GetFont());
+			dc.SetTextColor(CGetSetOptions::m_Theme.SearchTextBoxFocusText());
+			dc.DrawText(displayText, textRect, DT_SINGLELINE | DT_INTERNAL | DT_EDITCONTROL | DT_NOPREFIX);
+		}
 
 		dc.SelectObject(oldFont);
 		dc.SetTextColor(oldColor);
